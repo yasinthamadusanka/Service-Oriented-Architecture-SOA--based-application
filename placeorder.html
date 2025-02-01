@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+    <link rel="stylesheet" href="placeorder.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>Orders</h1>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Dashboard</a></li>
+                    <li><a href="suppliers.html">Suppliers</a></li>
+                    <li><a href="inventory.html">Inventory</a></li>
+                    <li><a href="orders.html" class="active">Orders</a></li>
+                </ul>
+            </nav>
+        </header>
+        <div class="order-wrapper">
+            <h1>Place Your Order</h1>
+            <div class="order-details">
+                <img id="item-image" src="" alt="Item Image" width="150">
+                <h3 id="item-name"></h3>
+                <p id="item-description"></p>
+                <hr/>
+                <p><strong>Supplier:</strong> <span id="supplier-name"></span></p>
+                <p><strong>Price:</strong> $<span id="item-price"></span></p>
+                <label for="item-quantity"><b>Quantity:</b></label>
+                <input type="number" id="item-quantity" min="1" value="1">
+                <button id="confirm-order">Place Order</button>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; 2024 TechFix. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const item = JSON.parse(decodeURIComponent(params.get('item')));
+    
+            document.getElementById('item-image').src = `http://localhost:5148/${item.imageUrl}`;
+            document.getElementById('item-name').textContent = item.itemName;
+            document.getElementById('item-description').textContent = item.description;
+            document.getElementById('item-price').textContent = item.price.toFixed(2);
+            document.getElementById('supplier-name').textContent = item.supplierName; 
+
+            const quantityInput = document.getElementById('item-quantity');
+            quantityInput.max = item.quantity;
+            document.getElementById('item-quantity').value = 1;
+    
+            quantityInput.addEventListener('input', () => {
+                if (quantityInput.value > item.quantity) {
+                    alert(`You cannot order more than ${item.quantity} unit(s).`);
+                    quantityInput.value = item.quantity;
+                } else if (quantityInput.value < 1) {
+                    quantityInput.value = 1;
+                }
+            });
+    
+            document.getElementById('confirm-order').addEventListener('click', async () => {
+                const selectedQuantity = parseInt(quantityInput.value, 10);
+                if (selectedQuantity > item.quantity) {
+                    alert(`Invalid quantity. The maximum available is ${item.quantity}.`);
+                    return;
+                }
+    
+                const orderData = {
+                    ItemName: item.itemName,
+                    Suppliername: item.supplierName,
+                    Quantity: selectedQuantity,
+                    Price: item.price,
+                    OrderDate: new Date().toISOString(),
+                    Status: "Pending",
+                    ImageUrl: item.imageUrl
+                };
+    
+                try {
+                    const response = await fetch('http://localhost:5148/api/Order/AddOrder', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(orderData)
+                    });
+    
+                    const data = await response.json();
+    
+                    if (response.ok) {
+                        showMessage(data.statusMessage || 'Order placed successfully!', 'green');
+                        setTimeout(() => {
+                            window.location.href = 'inventory.html';
+                        }, 2000);
+                    } else {
+                        showMessage(data.statusMessage || 'Failed to place order.', 'red');
+                    }
+                } catch (error) {
+                    showMessage('An error occurred while placing the order.', 'red');
+                    console.error(error);
+                }
+            });
+        });
+    
+        function showMessage(message, color) {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.left = '50%';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.padding = '10px 20px';
+            messageDiv.style.backgroundColor = color;
+            messageDiv.style.color = '#fff';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontSize = '16px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transition = 'opacity 0.5s ease-in-out';
+    
+            document.body.appendChild(messageDiv);
+    
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 500);
+            }, 2000);
+        }
+    </script>
+    
+</body>
+</html>

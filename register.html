@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Register</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #000000,#2E2F5B);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .welcome-heading {
+            margin-top: 20px; /* Adjust spacing from the top */
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff; /* White text for better contrast */
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Optional text shadow for readability */
+        }
+
+        .container {
+            background-color: #2E2F5B;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 25px 27px rgba(173, 167, 167, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .container h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #FFFFFF;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: #ff758c;
+            outline: none;
+            box-shadow: 0 0 5px rgba(255, 117, 140, 0.5);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #505581;
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #1b1b37;
+        }
+
+        .footer {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #FFFFFF;
+        }
+
+        .footer a {
+            color: #FAF0CA;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="welcome-heading">Welcome TechFix!</h1>
+    <div class="container">
+        <h1>Admin Register</h1>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Choose a username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+            </div>
+            <button type="submit" class="btn">Register</button>
+        </form>
+        <div class="footer">
+            <p>Already have an account? <a href="index.html">Sign In</a>.</p>
+        </div>
+    </div>
+    <script>
+        // Function to handle form submission
+        async function registerStaff(event) {
+            // Prevent the form from submitting and reloading the page
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters.', 'red');
+                return;
+            }
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match!', 'red');
+                return;
+            }
+
+            const staffData = {
+                id: 0,
+                Name: username,
+                Email: email,
+                Password: password,
+                cPassword: confirmPassword
+            };
+
+            try {
+                // Send the data to the server using fetch
+                const response = await fetch('http://localhost:5148/api/Staff/AddStaff', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(staffData)
+                });
+
+                const data = await response.json();
+
+                if (data.statuscode === 200) {
+                    showMessage(data.statusMessage, 'green');
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; 
+                    }, 2000); 
+                } else if (data.statuscode === 400) {
+                    showMessage(data.statusMessage, 'red');
+                } else if (data.statuscode === 500) {
+                    showMessage(data.statusMessage, 'red');
+                }
+            } catch (error) {
+                showMessage('An error occurred while making the request.', 'red');
+            }
+        }
+
+        function showMessage(message, color) {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.left = '50%';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.padding = '10px 20px';
+            messageDiv.style.backgroundColor = color;
+            messageDiv.style.color = '#fff';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontSize = '16px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transition = 'opacity 0.5s ease-in-out';
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove(); 
+                }, 500);
+            }, 2000);
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', registerStaff);
+    </script>
+</body>
+</html>

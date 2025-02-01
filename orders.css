@@ -1,0 +1,130 @@
+html,body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    height: 100%;
+    background-color: #FAF0CA;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: #0b2a4a;
+    color: white;
+    padding: 1em 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 10px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+nav ul li a:hover {
+    box-shadow: 0 4px 8px rgb(214, 179, 25); /* Example shadow */
+    transition: box-shadow 0.3s ease; /* Smooth transition */
+}
+
+nav ul li a.active {
+    color: rgb(214, 179, 25);;
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+}
+
+section h2{
+    color: #0b2a4a;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #505581;
+    border: 1px solid #FAF0CA;
+    border-radius: 5px;
+}
+
+.toolbar label {
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+    margin-right: 5px;
+}
+
+.toolbar input[type="text"],
+.toolbar select {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    outline: none;
+}
+
+.toolbar input[type="text"]:focus,
+.toolbar select:focus {
+    border-color: #F4D35E;
+    box-shadow: 0 0 5px #F4D35E;
+}
+
+.toolbar select {
+    cursor: pointer;
+    appearance: none;
+    background-color: #fff;
+    padding-right: 25px;
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .toolbar label {
+        margin-bottom: 5px;
+    }
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+table th, table td {
+    border: 1px solid #505581;
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #FAF0CA;
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #0b2a4a;
+    color: white;
+}

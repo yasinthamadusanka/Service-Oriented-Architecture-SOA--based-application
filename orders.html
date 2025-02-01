@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+    <link rel="stylesheet" href="orders.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>Orders</h1>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Dashboard</a></li>
+                    <li><a href="suppliers.html">Suppliers</a></li>
+                    <li><a href="inventory.html">Inventory</a></li>
+                    <li><a href="orders.html" class="active">Orders</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section>
+                <h2>Order History</h2>
+                <div class="toolbar">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" placeholder="Search by supplier or item">
+            
+                    <label for="sort">Sort By:</label>
+                    <select id="sort">
+                        <option value="date-desc">Date: Newest to Oldest</option>
+                        <option value="date-asc">Date: Oldest to Newest</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
+            
+                    <label for="filter">Filter:</label>
+                    <select id="filter">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order Date</th>
+                            <th>Supplier Name</th>
+                            <th>Item Name</th>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th> 
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list">
+                    </tbody>
+                </table>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2024 TechFix. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const orderList = document.getElementById('order-list');
+            const searchInput = document.getElementById('search');
+            const sortSelect = document.getElementById('sort');
+            const filterSelect = document.getElementById('filter');
+            const apiUrl = 'http://localhost:5148/api/Order/ViewOrders';
+            let orders = [];
+
+            async function fetchOrdersData() {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.statuscode === 200) {
+                        orders = data.data; // Store original orders data
+                        populateOrderTable(orders);
+                    } else {
+                        console.error('Failed to fetch orders:', data.statusMessage);
+                    }
+                } catch (error) {
+                    console.error('Error fetching orders:', error);
+                }
+            }
+
+            function populateOrderTable(filteredOrders) {
+                orderList.innerHTML = ''; // Clear table before repopulating
+                let totalAmount = 0;
+
+                filteredOrders.forEach(order => {
+                    const date = new Date(order.orderDate);
+                    const formattedDate = date.toLocaleString();
+
+                    const row = `<tr>
+                        <td style="text-align:center;">${formattedDate}</td>
+                        <td>${order.supplierName}</td>
+                        <td>${order.itemName}</td>
+                        <td style="text-align:center;"><img src="http://localhost:5148/${order.imageUrl}" alt="${order.itemName}" width="50"></td>
+                        <td style="text-align:center;">${order.quantity}</td>
+                        <td style="text-align:center;">$${order.price.toFixed(2)}</td>
+                        <td style="text-align:center;">$${(order.price * order.quantity).toFixed(2)}</td>
+                        <td style="text-align:center;">${order.status}</td>
+                    </tr>`;
+                    orderList.innerHTML += row;
+
+                    totalAmount += order.price * order.quantity;
+                });
+
+                if (filteredOrders.length) {
+                    const totalRow = `<tr>
+                        <td colspan="5" style="text-align: center; font-weight: bold;">Total Amount</td>
+                        <td style="text-align:center;">$${totalAmount.toFixed(2)}</td>
+                        
+                    </tr>`;
+                    orderList.innerHTML += totalRow;
+                }
+            }
+
+            function applyFiltersAndSorting() {
+                let filteredOrders = [...orders];
+
+                // Search
+                const searchValue = searchInput.value.toLowerCase();
+                if (searchValue) {
+                    filteredOrders = filteredOrders.filter(order =>
+                        order.supplierName.toLowerCase().includes(searchValue) ||
+                        order.itemName.toLowerCase().includes(searchValue)
+                    );
+                }
+
+                // Filter
+                const filterValue = filterSelect.value;
+                if (filterValue !== 'all') {
+                    filteredOrders = filteredOrders.filter(order =>
+                        order.status.toLowerCase() === filterValue
+                    );
+                }
+
+                // Sort
+                const sortValue = sortSelect.value;
+                if (sortValue === 'date-asc') {
+                    filteredOrders.sort((a, b) => new Date(a.orderDate) - new Date(b.orderDate));
+                } else if (sortValue === 'date-desc') {
+                    filteredOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                } else if (sortValue === 'price-asc') {
+                    filteredOrders.sort((a, b) => a.price - b.price);
+                } else if (sortValue === 'price-desc') {
+                    filteredOrders.sort((a, b) => b.price - a.price);
+                }
+
+                populateOrderTable(filteredOrders);
+            }
+
+            // Event Listeners for Toolbar Inputs
+            searchInput.addEventListener('input', applyFiltersAndSorting);
+            sortSelect.addEventListener('change', applyFiltersAndSorting);
+            filterSelect.addEventListener('change', applyFiltersAndSorting);
+
+            await fetchOrdersData();
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+/* Ensure body and html take full height */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #FAF0CA;
+}
+
+/* Wrapper for flexbox layout */
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header styles */
+header {
+    background-color: #0b2a4a;
+    color: white;
+    padding: 1em 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 10px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+nav ul li a:hover {
+    box-shadow: 0 4px 8px rgb(214, 179, 25); /* Example shadow */
+    transition: box-shadow 0.3s ease; /* Smooth transition */
+}
+
+nav ul li a.active {
+    color: rgb(214, 179, 25);
+}
+
+
+/* Main content area */
+main {
+    flex: 1; /* Expands to fill available space */
+    padding: 2rem;
+}
+
+#overview {
+    margin-top: 20px; /* Adjust this as needed */
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+}
+
+#main-topic{
+    color: #2E2F5B;
+    font-weight: bold;
+}
+
+/* Card styles */
+.card {
+    background-color: #FAF0CA;
+    padding: 20px;
+    border: 1px solid #505581;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px #505581;
+    width: 400px;
+    margin-bottom: 20px; /* Space between cards */
+}
+
+.card:hover{
+    cursor: pointer;
+    background-color: #F4D35E;
+}
+
+.card h3 {
+    font-size: 1.4rem;
+    color: #2E2F5B;
+}
+
+.card p {
+    font-size: 1rem;
+    color: #000000;
+}
+
+#inventory-list,#orders-list li{
+    color: #000000;
+}
+
+
+
+/* Footer always at the bottom */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #0b2a4a;
+    color: white;
+}

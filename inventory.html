@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory</title>
+    <link rel="stylesheet" href="inventory.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>Inventory</h1>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Dashboard</a></li>
+                    <li><a href="suppliers.html">Suppliers</a></li>
+                    <li><a href="inventory.html" class="active">Inventory</a></li>
+                    <li><a href="orders.html">Orders</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section>
+                <div class="toolbar">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" placeholder="Search by name">
+            
+                    <label for="sort">Sort By:</label>
+                    <select id="sort">
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="quantity-asc">Quantity: Low to High</option>
+                        <option value="quantity-desc">Quantity: High to Low</option>
+                    </select>
+            
+                    <label for="filter">Filter:</label>
+                    <select id="filter">
+                        <option value="all">All Items</option>
+                        <option value="in-stock">In Stock</option>
+                        <option value="out-of-stock">Out of Stock</option>
+                    </select>
+                </div>
+                <h2>Alpha Hardware Supplies</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Description</th>
+                            <th>Status</th>
+				<th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplier1-list">
+                    </tbody>
+                </table>
+            </section>
+            <section>
+                <h2>Beta Tech Distributors</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Description</th>
+                            <th>Status</th>
+				<th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplier2-list">
+                    </tbody>
+                </table>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2024 TechFix. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const apiUrl = 'http://localhost:5148/api/Inventory/ViewInventory';
+
+            let inventoryItems = [];
+
+            async function fetchInventoryData() {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.statuscode === 200) {
+                        inventoryItems = data.list;
+                        renderTable();
+                    } else {
+                        console.error('Failed to fetch inventory:', data.statusMessage);
+                    }
+                } catch (error) {
+                    console.error('Error fetching inventory:', error);
+                }
+            }
+
+            function renderTable() {
+                const supplier1Table = document.getElementById('supplier1-list');
+                const supplier2Table = document.getElementById('supplier2-list');
+                supplier1Table.innerHTML = '';
+                supplier2Table.innerHTML = '';
+
+                const filteredItems = applySortAndFilter(inventoryItems);
+
+                filteredItems.forEach(item => {
+                    const statusText = item.quantity > 0 ? 'In Stock' : 'Out of Stock';
+                    const statusClass = item.quantity > 0 ? '' : 'out-of-stock';
+
+                    const actionButton = item.quantity > 0
+                        ? `<button class="place-order" data-item='${JSON.stringify(item)}'>Place Order</button>`
+                        : `<button class="place-order muted" disabled>Place Order</button>`;
+
+                    const row = `<tr>
+                        <td>${item.itemName}</td>
+                        <td style="text-align:center;"><img src="http://localhost:5148/${item.imageUrl}" alt="${item.itemName}" width="50"></td>
+                        <td style="text-align:center;">${item.quantity}</td>
+                        <td style="text-align:center;">$${item.price.toFixed(2)}</td>
+                        <td>${item.description}</td>
+                        <td style="text-align:center;" class="${statusClass}">${statusText}</td>
+                        <td style="text-align:center;">${actionButton}</td>
+                    </tr>`;
+
+                    if (item.supplierId === 1) {
+                        supplier1Table.innerHTML += row;
+                    } else if (item.supplierId === 2) {
+                        supplier2Table.innerHTML += row;
+                    }
+                });
+
+                document.querySelectorAll('.place-order').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const item = JSON.parse(event.target.dataset.item);
+                        window.location.href = `placeorder.html?item=${encodeURIComponent(JSON.stringify(item))}`;
+                    });
+                });
+            }
+
+            function applySortAndFilter(items) {
+                const sortValue = document.getElementById('sort').value;
+                const filterValue = document.getElementById('filter').value;
+                const searchValue = document.getElementById('search').value.toLowerCase();
+
+                // Filter items by stock status
+                let filteredItems = items;
+                if (filterValue === 'in-stock') {
+                    filteredItems = items.filter(item => item.quantity > 0);
+                } else if (filterValue === 'out-of-stock') {
+                    filteredItems = items.filter(item => item.quantity === 0);
+                }
+
+                // Filter items by search value
+                if (searchValue) {
+                    filteredItems = filteredItems.filter(item =>
+                        item.itemName.toLowerCase().includes(searchValue) ||
+                        item.description.toLowerCase().includes(searchValue)
+                    );
+                }
+
+                // Sort items
+                if (sortValue === 'price-asc') {
+                    filteredItems.sort((a, b) => a.price - b.price);
+                } else if (sortValue === 'price-desc') {
+                    filteredItems.sort((a, b) => b.price - a.price);
+                } else if (sortValue === 'quantity-asc') {
+                    filteredItems.sort((a, b) => a.quantity - b.quantity);
+                } else if (sortValue === 'quantity-desc') {
+                    filteredItems.sort((a, b) => b.quantity - a.quantity);
+                }
+
+                return filteredItems;
+            }
+
+            document.getElementById('sort').addEventListener('change', renderTable);
+            document.getElementById('filter').addEventListener('change', renderTable);
+            document.getElementById('search').addEventListener('input', renderTable);
+
+            await fetchInventoryData();
+        });
+
+
+
+    </script>
+</body>
+</html>

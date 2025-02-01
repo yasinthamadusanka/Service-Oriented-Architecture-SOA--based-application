@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechFix Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>TechFix Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="home.html" class="active">Dashboard</a></li>
+                    <li><a href="suppliers.html">Suppliers</a></li>
+                    <li><a href="inventory.html">Inventory</a></li>
+                    <li><a href="orders.html">Orders</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <h1 id="main-topic">Overview</h1>
+            <section id="overview">
+                <div class="card" id="recent-orders">
+                    <h3>Recent Orders</h3>
+                    <ul id="orders-list"></ul>
+                </div>
+                <div class="card" id="inventory-alerts">
+                    <h3>Inventory Alerts</h3>
+                    <ul id="inventory-list"></ul>
+                </div>
+                <div class="card" id="quotation-alerts">
+                    <h3>Quatation Alerts</h3>
+                    <ul id="quotation-list"></ul>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 TechFix. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+
+        document.getElementById('recent-orders').addEventListener('click', function() {
+            window.location.href = 'orders.html'; 
+        });
+
+        document.getElementById('inventory-alerts').addEventListener('click', function() {
+            window.location.href = 'inventory.html'; 
+        });
+
+        document.getElementById('quotation-alerts').addEventListener('click', function() {
+            window.location.href = 'suppliers.html'; 
+        });
+        
+    
+        async function fetchOrders() {
+            try {
+                const response = await fetch('http://localhost:5148/api/Order/ViewOrders',{
+                    method: 'GET',
+                    headers: {
+                            'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                const ordersList = document.getElementById('orders-list');
+                ordersList.innerHTML = '';
+
+                if (data.statuscode === 200) {
+                        if (data.data && data.data.length > 0) {
+                            data.data.forEach(order => {
+                                const listItem = document.createElement('li');
+                                listItem.textContent = `${order.itemName} (${order.quantity}) - ${order.status}`;
+                                ordersList.appendChild(listItem);
+                            });
+                        } else {
+                            const noOrdersMessage = document.createElement('li');
+                            noOrdersMessage.textContent = 'No Recent Orders';
+                            ordersList.appendChild(noOrdersMessage);
+                        }
+                    } else {
+                        console.error('Failed to fetch orders:', data.statusMessage);
+                        const errorMessage = document.createElement('li');
+                        errorMessage.textContent = 'Error fetching orders';
+                        ordersList.appendChild(errorMessage);
+                    }
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                const ordersList = document.getElementById('orders-list');
+                const errorMessage = document.createElement('li');
+                errorMessage.textContent = 'Error fetching orders';
+                ordersList.appendChild(errorMessage);
+            }
+        }
+
+        // Function to fetch and display inventory
+        async function fetchInventory() {
+            try {
+                const response = await fetch('http://localhost:5148/api/Inventory/ViewInventory');
+                const data = await response.json();
+
+                const inventoryList = document.getElementById('inventory-list');
+                inventoryList.innerHTML = ''; // Clear the list before repopulating
+
+                if (data.statuscode === 200) {
+                    if (data.list && data.list.length > 0) {
+                        let outOfStockCount = 0;
+                        let lowStockCount = 0;
+
+                        data.list.forEach(item => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = `${item.itemName} (${item.quantity})`;
+                            inventoryList.appendChild(listItem);
+
+                            // Track inventory alerts
+                            if (item.quantity === 0) outOfStockCount++;
+                            else if (item.quantity < 10) lowStockCount++;
+                        });
+
+                        // Update inventory alerts
+                        const inventoryAlerts = document.getElementById('inventory-alerts');
+                        inventoryAlerts.innerHTML += `<p>${outOfStockCount} items out of stock</p>`;
+                        inventoryAlerts.innerHTML += `<p>${lowStockCount} items running low (less than 10 in stock)</p>`;
+                    } else {
+                        const noInventoryMessage = document.createElement('li');
+                        noInventoryMessage.textContent = 'No Recent Inventory';
+                        inventoryList.appendChild(noInventoryMessage);
+
+                    }
+                } else {
+                    console.error('Failed to fetch inventory:', data.StatusMessage);
+                    const errorMessage = document.createElement('li');
+                    errorMessage.textContent = 'Error fetching inventory';
+                    inventoryList.appendChild(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error fetching inventory:', error);
+                const inventoryList = document.getElementById('inventory-list');
+                const errorMessage = document.createElement('li');
+                errorMessage.textContent = 'Error fetching inventory';
+                inventoryList.appendChild(errorMessage);
+            }
+        }
+
+
+        async function fetchQuotations() {
+            try {
+                const response = await fetch('http://localhost:5148/api/Quotation/ViewQuotation', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                const quotationsList = document.getElementById('quotation-list');
+                quotationsList.innerHTML = ''; // Clear the list before populating
+
+                if (data.statuscode === 200) {
+                    if (data.quotations && data.quotations.length > 0) {
+                        data.quotations.forEach(quotation => {
+                            const listItem = document.createElement('li');
+                            // Displaying supplier name and items in the quotation
+                            listItem.textContent = `${quotation.supplierName} - ${quotation.items}`;
+                            quotationsList.appendChild(listItem);
+                        });
+                    } else {
+                        const noQuotationsMessage = document.createElement('li');
+                        noQuotationsMessage.textContent = 'No Recent Quotation Requests';
+                        quotationsList.appendChild(noQuotationsMessage);
+                    }
+                } else {
+                    console.error('Failed to fetch quotations:', data.statusMessage);
+                    const errorMessage = document.createElement('li');
+                    errorMessage.textContent = 'Error fetching quotations';
+                    quotationsList.appendChild(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error fetching quotations:', error);
+                const quotationsList = document.getElementById('quotation-list');
+                const errorMessage = document.createElement('li');
+                errorMessage.textContent = 'Error fetching quotations';
+                quotationsList.appendChild(errorMessage);
+            }
+        }
+
+
+        // Fetch data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders();
+            fetchInventory();
+            fetchQuotations();
+        });
+
+    </script>
+</body>
+</html>

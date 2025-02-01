@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers</title>
+    <link rel="stylesheet" href="suppliers.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>Suppliers</h1>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Dashboard</a></li>
+                    <li><a href="suppliers.html" class="active">Suppliers</a></li>
+                    <li><a href="inventory.html">Inventory</a></li>
+                    <li><a href="orders.html">Orders</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section>
+                <div id="supplier-list" class="supplier-container">
+                </div>
+                <div id="quote-request-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <h3>Request a Quote</h3>
+                        <form id="quote-form">
+                            <label for="supplier-name">Supplier:</label>
+                            <input type="text" id="supplier-name" readonly>
+            
+                            <label for="items">Select Items:</label>
+                            <textarea id="items" rows="5" placeholder="Enter items and quantities (e.g., Item A: 10)"></textarea>
+            
+                            <button type="submit">Send Quote Request</button>
+                            <button type="button" id="close-modal">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2024 TechFix. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const apiUrl = 'http://localhost:5148/api/Supplier/GetAllSuppliers';
+            const quoteApiUrl = 'http://localhost:5148/api/Quotation/CreateQuotation';
+            const supplierContainer = document.getElementById('supplier-list');
+            const quoteModal = document.getElementById('quote-request-modal');
+            const quoteForm = document.getElementById('quote-form');
+            const supplierNameInput = document.getElementById('supplier-name');
+            const itemsInput = document.getElementById('items');
+            const closeModalButton = document.getElementById('close-modal');
+            let selectedSupplier = null;
+
+            async function fetchSupplierData() {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.statuscode === 200) {
+                        populateSuppliers(data.suppliers);
+                    } else {
+                        console.error('Failed to fetch suppliers:', data.statusMessage);
+                    }
+                } catch (error) {
+                    console.error('Error fetching suppliers:', error);
+                }
+            }
+
+            function populateSuppliers(suppliers) {
+                supplierContainer.innerHTML = '';
+                if (suppliers.length === 0) {
+                    // If no suppliers, display the "No suppliers added" message
+                    supplierContainer.innerHTML = '<p>No suppliers added.</p>';
+                    return;
+                }
+                suppliers.forEach(supplier => {
+                    const supplierDiv = document.createElement('div');
+                    supplierDiv.className = 'supplier-item';
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'supplier-left';
+                    leftDiv.innerHTML = `
+                        <h3>${supplier.supplierName}</h3>
+                        <img src="http://localhost:5148/${supplier.imageUrl}" alt="${supplier.supplierName}" class="supplier-image"></h3>
+                        <p>Address: ${supplier.address}</p>
+                        <p>Email: ${supplier.email}</p>
+                        <p>Phone: ${supplier.phoneNumber}</p>
+                    `;
+
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'supplier-right';
+                    rightDiv.innerHTML = `
+                        <button class="request-quote" data-supplier='${JSON.stringify(supplier)}'>Request Quote</button>
+                    `;
+
+                    supplierDiv.appendChild(leftDiv);
+                    supplierDiv.appendChild(rightDiv);
+
+                    supplierContainer.appendChild(supplierDiv);
+                });
+
+                document.querySelectorAll('.request-quote').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const supplier = JSON.parse(event.target.dataset.supplier);
+                        openQuoteModal(supplier);
+                    });
+                });
+            }
+
+            function openQuoteModal(supplier) {
+                selectedSupplier = supplier;
+                supplierNameInput.value = supplier.supplierName;
+                itemsInput.value = '';
+                quoteModal.classList.remove('hidden');
+            }
+
+            function closeQuoteModal() {
+                quoteModal.classList.add('hidden');
+                selectedSupplier = null;
+            }
+
+            async function sendQuoteRequest(event) {
+                event.preventDefault();
+
+                if (!selectedSupplier) {
+                    showMessage('No supplier selected.', 'red');
+                    return;
+                }
+
+                const items = itemsInput.value.trim();
+                if (!items) {
+                    showMessage('Please specify items and quantities.', 'red');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(quoteApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            supplierId: selectedSupplier.supplierId,
+                            supplierName: selectedSupplier.supplierName,
+                            items: items
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.statuscode === 200) {
+                        showMessage(data.statusMessage, 'green');
+                        closeQuoteModal();
+                    } else {
+                        showMessage(data.statusMessage, 'red');
+                    }
+                } catch (error) {
+                    showMessage('An error occurred while making the request.', 'red');
+                }
+            }
+
+            closeModalButton.addEventListener('click', closeQuoteModal);
+            quoteForm.addEventListener('submit', sendQuoteRequest);
+            await fetchSupplierData();
+        });
+
+        function showMessage(message, color) {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.left = '50%';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.padding = '10px 20px';
+            messageDiv.style.backgroundColor = color;
+            messageDiv.style.color = '#fff';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontSize = '16px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transition = 'opacity 0.5s ease-in-out';
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove(); 
+                }, 500);
+            }, 2000);
+        }
+
+    </script>
+</body>
+</html>
